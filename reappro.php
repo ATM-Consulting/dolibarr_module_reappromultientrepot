@@ -33,7 +33,7 @@ switch($action) {
 	case 'calcul':
 		$TProductsToReappro = _get_products_to_reappro($fk_entrepot_a_reappro, $TEntrepotSource);
 		_fiche('new');
-		_fiche_calcul($TProductsToReappro);
+		_fiche_calcul($TProductsToReappro, $TEntrepotSource);
 		break;
 	
 	default :
@@ -92,10 +92,11 @@ function _fiche($mode='view') {
 	
 }
 
-function _fiche_calcul(&$TProductsToReappro) {
+function _fiche_calcul(&$TProductsToReappro, &$TEntrepotSource) {
 	
-	global $db, $langs, $bc;
+	global $db, $langs, $formProduct, $bc;
 	
+	print '<br />';
 	print '<table class="noborder" width="100%">';
 	print '<tr class="liste_titre">';
 	print '<td>'.$langs->trans('Product').'</td>';
@@ -125,8 +126,9 @@ function _fiche_calcul(&$TProductsToReappro) {
 			print '<td>'.$TInfosProd['reel'].'</td>';
 			print '<td>'.$TInfosProd['seuil_stock_alerte'].'</td>';
 			print '<td>'.$TInfosProd['desiredstock'].'</td>';
-			print '<td>'.$TInfosProd['qty_to_reappro'].'</td>';
-			print '<td>ent_source</td>';
+			print '<td><input type="text" size="4" name="TQtyToReappro['.$fk_product.']['.$TInfosProd['fk_entrepot'].']" value="'.$TInfosProd['qty_to_reappro'].'" /></td>';
+			$id_right_entrepot = _get_right_warehouse_to_reappro($p, $TEntrepotSource, $TInfosProd['qty_to_reappro']);
+			print '<td>'.$formProduct->selectWarehouses($id_right_entrepot, 'TUsedEntrepot['.$fk_product.']['.$TInfosProd['fk_entrepot'].']', '', 1).'</td>';
 			print '</tr>';
 			
 			$first = false;
@@ -172,5 +174,30 @@ function _get_products_to_reappro($id_entrepot_to_reappro, $TEntrepotSource) {
 	}
 
 	return $TProductsToReappro;
+	
+}
+
+function _get_right_warehouse_to_reappro(&$p, &$TEntrepotSource, $qty) {
+	
+	global $db;
+	
+	$p->load_stock();
+	
+	foreach($TEntrepotSource as $id_ent) {
+		
+		$entrepot_for_reappro = new Entrepot($db);
+		$entrepot_for_reappro->fetch($id_ent);
+		
+		$TChildWarehouses = array($entrepot_for_reappro->id);
+		$entrepot_for_reappro->get_children_warehouses($entrepot_for_reappro->id, $TChildWarehouses);
+		
+		// Parmis tous les entrepôts de cette famille, on vérifie si l'un d'eux a la quantité que je souhaite
+		foreach($TChildWarehouses as $id_entrepot) {
+			
+			if($p->stock_warehouse[$id_entrepot]->real >= $qty) return $id_entrepot;
+			
+		}
+		
+	}
 	
 }
