@@ -42,6 +42,8 @@ class modreappromultientrepot extends DolibarrModules
 	{
         global $langs,$conf;
 
+		$langs->load('reappromultientrepot@reappromultientrepot');
+
         $this->db = $db;
 
 		// Id for module (must be unique).
@@ -188,34 +190,47 @@ class modreappromultientrepot extends DolibarrModules
 		// Add here entries to declare new menus
 		//
 		// Example to declare a new Top Menu entry and its Left menu entry:
-		// $this->menu[$r]=array(	'fk_menu'=>0,			                // Put 0 if this is a top menu
-		//							'type'=>'top',			                // This is a Top menu entry
-		//							'titre'=>'reappromultientrepot top menu',
-		//							'mainmenu'=>'reappromultientrepot',
-		//							'leftmenu'=>'reappromultientrepot',
-		//							'url'=>'/reappromultientrepot/pagetop.php',
-		//							'langs'=>'mylangfile@reappromultientrepot',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-		//							'position'=>100,
-		//							'enabled'=>'$conf->reappromultientrepot->enabled',	// Define condition to show or hide menu entry. Use '$conf->reappromultientrepot->enabled' if entry must be visible if module is enabled.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->reappromultientrepot->level1->level2' if you want your menu with a permission rules
-		//							'target'=>'',
-		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
-		// $r++;
-		//
-		// Example to declare a Left Menu entry into an existing Top menu entry:
-		// $this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=xxx',		    // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
-		//							'type'=>'left',			                // This is a Left menu entry
-		//							'titre'=>'reappromultientrepot left menu',
-		//							'mainmenu'=>'xxx',
-		//							'leftmenu'=>'reappromultientrepot',
-		//							'url'=>'/reappromultientrepot/pagelevel2.php',
-		//							'langs'=>'mylangfile@reappromultientrepot',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
-		//							'position'=>100,
-		//							'enabled'=>'$conf->reappromultientrepot->enabled',  // Define condition to show or hide menu entry. Use '$conf->reappromultientrepot->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
-		//							'perms'=>'1',			                // Use 'perms'=>'$user->rights->reappromultientrepot->level1->level2' if you want your menu with a permission rules
-		//							'target'=>'',
-		//							'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
-		// $r++;
+		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=products',			                // Put 0 if this is a top menu
+								'type'=>'left',			                // This is a Top menu entry
+								'titre'=>$langs->trans('Module104993NameShort'),
+								'mainmenu'=>'products',
+								'leftmenu'=>'reappromultientrepot',
+								'url'=>'/reappromultientrepot/reappro.php?action=list',
+								'langs'=>'reappromultientrepot@reappromultientrepot',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+								'position'=>100,
+								'enabled'=>'$conf->reappromultientrepot->enabled',	// Define condition to show or hide menu entry. Use '$conf->reappromultientrepot->enabled' if entry must be visible if module is enabled.
+								'perms'=>'1',			                // Use 'perms'=>'$user->rights->reappromultientrepot->level1->level2' if you want your menu with a permission rules
+								'target'=>'',
+								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
+		$r++;
+		
+		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=products,fk_leftmenu=reappromultientrepot',		    // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+								'type'=>'left',			                // This is a Left menu entry
+								'titre'=>$langs->trans('reappromultientrepotList'),
+								'mainmenu'=>'reappromultientrepotList',
+								'leftmenu'=>'reappromultientrepotList',
+								'url'=>'/reappromultientrepot/reappro.php?action=list',
+								'langs'=>'reappromultientrepot@reappromultientrepot',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+								'position'=>101,
+								'enabled'=>'$conf->reappromultientrepot->enabled',  // Define condition to show or hide menu entry. Use '$conf->reappromultientrepot->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+								'perms'=>'1',			                // Use 'perms'=>'$user->rights->reappromultientrepot->level1->level2' if you want your menu with a permission rules
+								'target'=>'',
+								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
+		$r++;
+		
+		$this->menu[$r]=array(	'fk_menu'=>'fk_mainmenu=products,fk_leftmenu=reappromultientrepot',		    // Use 'fk_mainmenu=xxx' or 'fk_mainmenu=xxx,fk_leftmenu=yyy' where xxx is mainmenucode and yyy is a leftmenucode
+								'type'=>'left',			                // This is a Left menu entry
+								'titre'=>$langs->trans('reappromultientrepotCreate'),
+								'mainmenu'=>'reappromultientrepotCreate',
+								'leftmenu'=>'reappromultientrepotCreate',
+								'url'=>'/reappromultientrepot/reappro.php?action=new',
+								'langs'=>'reappromultientrepot@reappromultientrepot',	        // Lang file to use (without .lang) by module. File must be in langs/code_CODE/ directory.
+								'position'=>102,
+								'enabled'=>'$conf->reappromultientrepot->enabled',  // Define condition to show or hide menu entry. Use '$conf->reappromultientrepot->enabled' if entry must be visible if module is enabled. Use '$leftmenu==\'system\'' to show if leftmenu system is selected.
+								'perms'=>'1',			                // Use 'perms'=>'$user->rights->reappromultientrepot->level1->level2' if you want your menu with a permission rules
+								'target'=>'',
+								'user'=>2);				                // 0=Menu for internal users, 1=external users, 2=both
+		$r++;
 
 
 		// Exports
