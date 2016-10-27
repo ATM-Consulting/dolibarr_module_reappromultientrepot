@@ -10,14 +10,9 @@ if(!defined('INC_FROM_DOLIBARR')) {
 
 }
 
-
-/* uncomment
-
-
-dol_include_once('/mymodule/class/xxx.class.php');
+dol_include_once('/reappromultientrepot/class/reappro_multi_entrepot.class.php');
 
 $PDOdb=new TPDOdb;
 
-$o=new TXXX($db);
+$o=new TReapproMultiEntrepot($PDOdb);
 $o->init_db_by_vars($PDOdb);
-*/
