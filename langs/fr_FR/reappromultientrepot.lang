@@ -8,3 +8,5 @@ reappromultientrepotSetup = Configuration du module reappromultientrepot
 reappromultientrepotAbout = A propos du module reappromultientrepot
 reappromultientrepotList=Liste réapprovisionnements
 reappromultientrepotCreate=Créer réapprovisionnement
+reappromultientrepotFrom=Entrepôts sources
+reappromultientrepotTo=Entrepôt à réapprovitionner

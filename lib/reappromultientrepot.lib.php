@@ -53,3 +53,30 @@ function reappromultientrepotAdminPrepareHead()
 
     return $head;
 }
+
+function reappromultientrepotPrepareHead()
+{
+    global $langs, $conf;
+
+    $langs->load("reappromultientrepot@reappromultientrepot");
+
+    $h = 0;
+    $head = array();
+
+    $head[$h][0] = dol_buildpath('/reappromultientrepot/reappro.php?action='.GETPOST('action').'&id='.GETPOST('id'), 1);
+    $head[$h][1] = $langs->trans("Card");
+    $head[$h][2] = 'Module104993Name';
+    $h++;
+
+    // Show more tabs from modules
+    // Entries must be declared in modules descriptor with line
+    //$this->tabs = array(
+    //	'entity:+tabname:Title:@reappromultientrepot:/reappromultientrepot/mypage.php?id=__ID__'
+    //); // to add new tab
+    //$this->tabs = array(
+    //	'entity:-tabname:Title:@reappromultientrepot:/reappromultientrepot/mypage.php?id=__ID__'
+    //); // to remove a tab
+    complete_head_from_modules($conf, $langs, $object, $head, $h, 'reappromultientrepot');
+
+    return $head;
+}
