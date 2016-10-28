@@ -50,6 +50,14 @@ switch($action) {
 		$reappro->TFormulaire = serialize(GETPOST('TFormulaire'));
 		
 		$reappro->save($ATMdb);
+		
+		$btVentil = GETPOST('btVentil');
+		if(!empty($btVentil)) {
+			
+			//Ventilation
+			_ventilation($reappro, GETPOST('TFormulaire'));
+			
+		}
 	
 	case 'view':
 		_fiche($reappro, 'view');
@@ -112,7 +120,7 @@ function _fiche(&$reappro, $mode='view') {
 	
 	print '<br /><div class="center">';
 	print '<input type="hidden" name="action" value="calcul" />';
-	print '<input type="SUBMIT" class="button" name="btFormCalcul" value="'.$langs->trans('reappromultientrepotCalcul').'" />';
+	print '<input type="SUBMIT" class="button" name="btCalcul" value="'.$langs->trans('reappromultientrepotCalcul').'" />';
 	print '</div>';
 	
 	print '</form>';
@@ -191,7 +199,8 @@ function _fiche_calcul(&$reappro, &$TProductsToReappro, &$TEntrepotSource, $mode
 		foreach($TEntrepotSource as $id_ent)
 			print '<input type="hidden" name="TEntrepotSource[]" value="'.$id_ent.'" />';
 	}
-	print '<input type="SUBMIT" class="button" name="btFormCalcul" value="'.$langs->trans('Save').'" />';
+	print '<input type="SUBMIT" class="button" name="btSave" value="'.$langs->trans('Save').'" />';
+	if($mode === 'view') print ' <input type="SUBMIT" class="button" name="btVentil" value="'.$langs->trans('reappromultientrepotVentilation').'" />';
 	print '</div>';
 	
 	print '</form>';
@@ -251,6 +260,105 @@ function _get_right_warehouse_to_reappro(&$p, &$TEntrepotSource, $qty) {
 			
 			if($p->stock_warehouse[$id_entrepot]->real >= $qty) return $id_entrepot;
 			
+		}
+		
+	}
+	
+}
+
+function _liste_reappro() {
+	
+	global $db, $ATMdb, $langs;
+	
+	$l = new TListviewTBS('tagada');
+	
+	$sql = 'SELECT rowid, date_cre, fk_entrepot_a_reappro, fk_statut
+			FROM '.MAIN_DB_PREFIX.'reappro_multi_entrepot
+			ORDER BY rowid';
+	
+	print $l->render($ATMdb, $sql, array(
+		'type'=>array(
+			'date_cre'=>'date'
+		)
+		,'link'=>array(
+			'rowid'=>'<a href="'.dol_buildpath('/reappromultientrepot/reappro.php?id=@rowid@&action=view', 1).'" >@rowid@'
+		)
+		,'eval'=>array(
+			'fk_entrepot_a_reappro'=>'_getNomUrl("@val@")'
+		)
+		,'liste'=>array(
+			'titre'=>$langs->trans('reappromultientrepotList')
+			,'image'=>img_picto('','title.png', '', 0)
+			,'picto_precedent'=>img_picto('','back.png', '', 0)
+			,'picto_suivant'=>img_picto('','next.png', '', 0)
+			,'noheader'=> (int)isset($_REQUEST['fk_soc']) | (int)isset($_REQUEST['fk_product'])
+			,'messageNothing'=>"Il n'y a aucun ".$langs->trans('Module104993Name')." à afficher"
+			,'picto_search'=>img_picto('','search.png', '', 0)
+		)
+		,'title'=>array(
+			'rowid'=>'Numéro'
+			,'date_cre'=>'Date création'
+			,'fk_entrepot_a_reappro'=>'Entrepôt à réapprovisionner'
+			,'fk_statut'=>'Statut'
+		)
+	));
+	
+}
+
+function _getNomUrl($id) {
+	
+	global $db;
+	
+	$e = New Entrepot($db);
+	$e->fetch($id);
+	
+	return $e->getNomUrl(1);
+		
+}
+
+function _ventilation(&$reappro, $TFormulaire) {
+	
+	global $db, $user;
+	
+	if(!empty($TFormulaire)) {
+		
+		$nb_ok=0;
+		
+		foreach($TFormulaire as $fk_product=>$TData) {
+			$p = new Product($db);
+			$p->fetch($fk_product);
+			
+			foreach($TData as $TInfos) {
+				
+				if($TInfos['fk_entrepot'] <= 0) continue;
+				
+				// Remove stock
+				$result1=$p->correct_stock(
+					$user,
+					$TInfos['fk_entrepot'],
+					$TInfos['qty_to_reappro'],
+					1,
+					'Réapprovisionnement avancé n° <a href="'.dol_buildpath('/reappromultientrepot/reappro.php?id='.$reappro->rowid, 1).'">'.$reappro->rowid.'</a>'
+				);
+				
+				// Add stock
+				$result2=$p->correct_stock(
+					$user,
+					$TInfos['fk_entrepot_to_reappro'],
+					$TInfos['qty_to_reappro'],
+					0,
+					'Réapprovisionnement avancé n° <a href="'.dol_buildpath('/reappromultientrepot/reappro.php?id='.$reappro->rowid, 1).'">'.$reappro->rowid.'</a>'
+				);
+				
+				if($result1 > 0 && $result2 > 0) $nb_ok++;
+				
+			}
+					
+		}
+		
+		if($nb_ok > 0) {
+			setEventMessage($nb_ok.' mouvements de stock effectués');
+			// TODO cloturer réappro
 		}
 		
 	}

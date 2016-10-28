@@ -11,3 +11,5 @@ reappromultientrepotCreate=Créer réapprovisionnement
 reappromultientrepotFrom=Entrepôt(s) source(s)
 reappromultientrepotTo=Entrepôt à réapprovisionner
 reappromultientrepotCalcul=Calculer
+reappromultientrepotList=Liste réapprovisionnements
+reappromultientrepotVentilation=Ventiler stocks
