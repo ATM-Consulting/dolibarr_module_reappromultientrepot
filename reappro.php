@@ -35,13 +35,13 @@ switch($action) {
 		break;
 	
 	case 'new':
-		_fiche($reappro, $action);
+		_fiche($reappro);
 		break;
 	
 	case 'calcul':
 		$TProductsToReappro = _get_products_to_reappro($fk_entrepot_a_reappro, $TEntrepotSource);
 		_fiche($reappro, $action);
-		_fiche_calcul($TProductsToReappro, $TEntrepotSource, 'new');
+		_fiche_calcul($reappro, $TProductsToReappro, $TEntrepotSource, 'new');
 		break;
 	
 	case 'save':
@@ -53,13 +53,13 @@ switch($action) {
 	
 	case 'view':
 		_fiche($reappro, 'view');
-		//var_dump($reappro,unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource));
-		_fiche_calcul(unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource), 'view');
+		_fiche_calcul($reappro, unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource), 'view');
 		break;
 		
 	
 	default :
-		_fiche();
+		_fiche($reappro, 'view');
+		break;
 	
 }
 
@@ -101,7 +101,8 @@ function _fiche(&$reappro, $mode='view') {
 	print $langs->trans('reappromultientrepotFrom');
 	print '</td>';
 	print '<td>';
-	print $form->multiselectarray('TEntrepotSource', $e->list_array(), $mode === 'view'
+	print $form->multiselectarray('TEntrepotSource', $e->list_array()
+									, $mode === 'view'
 									? unserialize($reappro->TEntrepotSource)
 									: GETPOST('TEntrepotSource'), 0, 0, '', 0, 250);
 	print '</td>';
@@ -118,7 +119,7 @@ function _fiche(&$reappro, $mode='view') {
 	
 }
 
-function _fiche_calcul(&$TProductsToReappro, &$TEntrepotSource, $mode='create') {
+function _fiche_calcul(&$reappro, &$TProductsToReappro, &$TEntrepotSource, $mode='create') {
 	
 	global $db, $langs, $formProduct, $bc;
 
@@ -185,10 +186,9 @@ function _fiche_calcul(&$TProductsToReappro, &$TEntrepotSource, $mode='create') 
 	
 	print '<br /><div class="center">';
 	print '<input type="hidden" name="action" value="save" />';
-	print '<input type="hidden" name="fk_entrepot_a_reappro" value="'.GETPOST('fk_entrepot_a_reappro').'" />';
-	$TEntrepotSource = GETPOST('TEntrepotSource');
-	if(!empty(GETPOST('TEntrepotSource'))) {
-		foreach(GETPOST('TEntrepotSource') as $id_ent)
+	print '<input type="hidden" name="fk_entrepot_a_reappro" value="'.($mode === 'view' ? $reappro->fk_entrepot_a_reappro : GETPOST('fk_entrepot_a_reappro')).'" />';
+	if(!empty($TEntrepotSource)) {
+		foreach($TEntrepotSource as $id_ent)
 			print '<input type="hidden" name="TEntrepotSource[]" value="'.$id_ent.'" />';
 	}
 	print '<input type="SUBMIT" class="button" name="btFormCalcul" value="'.$langs->trans('Save').'" />';
