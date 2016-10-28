@@ -7,7 +7,9 @@ class TReapproMultiEntrepot extends TObjetStd {
 							,1=>'Ventilé'
 						);
 	
-	function __construct() {
+	function __construct($db) {
+		
+		$this->db = $db;
 		
 		$this->set_table(MAIN_DB_PREFIX.'reappro_multi_entrepot');
 		

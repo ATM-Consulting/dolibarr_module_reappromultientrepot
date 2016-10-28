@@ -54,7 +54,7 @@ function reappromultientrepotAdminPrepareHead()
     return $head;
 }
 
-function reappromultientrepotPrepareHead()
+function reappromultientrepotPrepareHead($id)
 {
     global $langs, $conf;
 
@@ -63,7 +63,7 @@ function reappromultientrepotPrepareHead()
     $h = 0;
     $head = array();
 
-    $head[$h][0] = dol_buildpath('/reappromultientrepot/reappro.php?action='.GETPOST('action').'&id='.GETPOST('id'), 1);
+    $head[$h][0] = dol_buildpath('/reappromultientrepot/reappro.php?id='.(empty($id) ? GETPOST('id') : $id), 1);
     $head[$h][1] = $langs->trans("Card");
     $head[$h][2] = 'Module104993Name';
     $h++;
