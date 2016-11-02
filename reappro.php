@@ -123,15 +123,18 @@ function _fiche(&$reappro, $mode='view') {
 	print '</td>';
 	print '</tr>';
 	
-	print '<tr '.(!empty($reappro->fk_statut) ? 'bgcolor="#00CC00"' : '').'>';
-	print '<td>';
-	print $langs->trans('Status');
-	print '</td>';
-	print '<td>';
-	print TReapproMultiEntrepot::$TStatus[$reappro->fk_statut];;
-	print '</td>';
-	print '</tr>';
+	if(!empty($reappro->rowid)) {
+		
+		print '<tr '.(!empty($reappro->fk_statut) ? 'bgcolor="#00CC00"' : '').'>';
+		print '<td>';
+		print $langs->trans('Status');
+		print '</td>';
+		print '<td>';
+		print TReapproMultiEntrepot::$TStatus[$reappro->fk_statut];;
+		print '</td>';
+		print '</tr>';
 	
+	}
 	print '</table>';
 	
 	print '<br />';
