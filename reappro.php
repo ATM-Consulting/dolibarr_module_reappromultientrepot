@@ -49,14 +49,21 @@ switch($action) {
 		$reappro->TEntrepotSource = serialize(GETPOST('TEntrepotSource'));
 		$reappro->TFormulaire = serialize(GETPOST('TFormulaire'));
 		
-		$reappro->save($ATMdb);
-		
 		$btVentil = GETPOST('btVentil');
-		if(!empty($btVentil)) {
+		
+		if(empty($reappro->fk_statut)){ // On ne touche le reappro uniquement s'il n'est pas déjà ventilé
+		
+			$reappro->save($ATMdb);
 			
-			//Ventilation
-			_ventilation($reappro, GETPOST('TFormulaire'));
-			
+			if(!empty($btVentil)) {
+				
+				//Ventilation
+				_ventilation($reappro, GETPOST('TFormulaire'));
+				$reappro->fk_statut = 1;
+				$reappro->save($ATMdb);
+				
+			}
+		
 		}
 	
 	case 'view':
@@ -116,13 +123,27 @@ function _fiche(&$reappro, $mode='view') {
 	print '</td>';
 	print '</tr>';
 	
+	print '<tr '.(!empty($reappro->fk_statut) ? 'bgcolor="#00CC00"' : '').'>';
+	print '<td>';
+	print $langs->trans('Status');
+	print '</td>';
+	print '<td>';
+	print TReapproMultiEntrepot::$TStatus[$reappro->fk_statut];;
+	print '</td>';
+	print '</tr>';
+	
 	print '</table>';
 	
-	print '<br /><div class="center">';
-	print '<input type="hidden" name="action" value="calcul" />';
-	print '<input type="SUBMIT" class="button" name="btCalcul" value="'.$langs->trans('reappromultientrepotCalcul').'" />';
-	print '</div>';
+	print '<br />';
 	
+	if(empty($reappro->fk_statut)) {
+		
+		print '<div class="center">';
+		print '<input type="hidden" name="action" value="calcul" />';
+		print '<input type="SUBMIT" class="button" name="btCalcul" value="'.$langs->trans('reappromultientrepotCalcul').'" />';
+		print '</div>';
+		
+	}
 	print '</form>';
 	
 }
@@ -192,17 +213,23 @@ function _fiche_calcul(&$reappro, &$TProductsToReappro, &$TEntrepotSource, $mode
 	
 	print '</table>';
 	
-	print '<br /><div class="center">';
-	print '<input type="hidden" name="action" value="save" />';
-	print '<input type="hidden" name="fk_entrepot_a_reappro" value="'.($mode === 'view' ? $reappro->fk_entrepot_a_reappro : GETPOST('fk_entrepot_a_reappro')).'" />';
-	if(!empty($TEntrepotSource)) {
-		foreach($TEntrepotSource as $id_ent)
-			print '<input type="hidden" name="TEntrepotSource[]" value="'.$id_ent.'" />';
-	}
-	print '<input type="SUBMIT" class="button" name="btSave" value="'.$langs->trans('Save').'" />';
-	if($mode === 'view') print ' <input type="SUBMIT" class="button" name="btVentil" value="'.$langs->trans('reappromultientrepotVentilation').'" />';
-	print '</div>';
+	print '<br />';
 	
+	if(empty($reappro->fk_statut)) {
+		
+		print '<div class="center">';
+		print '<input type="hidden" name="action" value="save" />';
+		print '<input type="hidden" name="fk_entrepot_a_reappro" value="'.($mode === 'view' ? $reappro->fk_entrepot_a_reappro : GETPOST('fk_entrepot_a_reappro')).'" />';
+		if(!empty($TEntrepotSource)) {
+			foreach($TEntrepotSource as $id_ent)
+				print '<input type="hidden" name="TEntrepotSource[]" value="'.$id_ent.'" />';
+		}
+		print '<input type="SUBMIT" class="button" name="btSave" value="'.$langs->trans('Save').'" />';
+		if($mode === 'view') print ' <input type="SUBMIT" class="button" name="btVentil" value="'.$langs->trans('reappromultientrepotVentilation').'" />';
+		print '</div>';
+		
+	}
+
 	print '</form>';
 	
 }
@@ -285,6 +312,7 @@ function _liste_reappro() {
 		)
 		,'eval'=>array(
 			'fk_entrepot_a_reappro'=>'_getNomUrl("@val@")'
+			,'fk_statut'=>'TReapproMultiEntrepot::$TStatus["@val@"]'
 		)
 		,'liste'=>array(
 			'titre'=>$langs->trans('reappromultientrepotList')
