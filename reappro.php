@@ -211,7 +211,7 @@ function _fiche_calcul(&$reappro, &$TProductsToReappro, &$TEntrepotSource, $mode
 			print '<input type="hidden" size="4" name="TFormulaire['.$fk_product.']['.$i.'][fk_product]" value="'.$fk_product.'" />';
 			print '<input type="hidden" size="4" name="TFormulaire['.$fk_product.']['.$i.'][fk_entrepot_to_reappro]" value="'.$TInfosProd['fk_entrepot_to_reappro'].'" />';
 			print '<input type="hidden" size="4" name="TFormulaire['.$fk_product.']['.$i.'][seuil_stock_alerte]" value="'.$TInfosProd['seuil_stock_alerte'].'" />';
-			print '<input type="hidden" size="4" name="TFormulaire['.$fk_product.']['.$i.'][desiredstock]" value="'.$TInfosProd['desiredstock'].'" /';
+			print '<input type="hidden" size="4" name="TFormulaire['.$fk_product.']['.$i.'][desiredstock]" value="'.$TInfosProd['desiredstock'].'" />';
 			print '<input type="hidden" size="4" name="TFormulaire['.$fk_product.']['.$i.'][reel]" value="'.$TInfosProd['reel'].'" />';
 			print '</td>';
 			
