@@ -431,9 +431,8 @@ function _print_document_list(&$reappro) {
 
 	$urlsource = $_SERVER["PHP_SELF"]."?id=".$reappro->rowid;
 
-	$genallowed=$user->rights->reappromultientrepot->lire;
-	$delallowed=$user->rights->reappromultientrepot->supprimer;
-	$genallowed=$delallowed=1; // TODO créer droit
+	$genallowed = $delallowed = $user->rights->reappromultientrepot->lire;
+
 	$somethingshown=$formfile->show_documents('reappromultientrepot',$reappro->rowid,$filedir,$urlsource,$genallowed,$delallowed,'',1,0,0,28,0,'','','',$soc->default_lang);
 	
 }
