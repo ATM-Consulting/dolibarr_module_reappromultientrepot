@@ -69,18 +69,18 @@ class pdf_fiche_reappro extends ModelePdfExpedition
 
 		// Defini position des colonnes
 		$this->posxdesc=$this->marge_gauche+1;
-		$this->posxqtyordered=$this->page_largeur - $this->marge_droite - 70;
-		$this->posxqtyordered-=35;
-		$this->posxqtytoship=$this->page_largeur - $this->marge_droite - 35;
-		$this->posxqtytoship-=35;
-		$this->posxdifference_ordered_shipped=$this->posxqtytoship+35;
-		$this->posxpicture=$this->posxqtyordered - (empty($conf->global->MAIN_DOCUMENTS_WITH_PICTURE_WIDTH)?20:$conf->global->MAIN_DOCUMENTS_WITH_PICTURE_WIDTH);	// width of images
+		$this->posxentrepot_source=$this->page_largeur - $this->marge_droite - 70;
+		$this->posxentrepot_source-=35;
+		$this->posxentrepot_a_reappro=$this->page_largeur - $this->marge_droite - 35;
+		$this->posxentrepot_a_reappro-=35;
+		$this->posxqty_a_transferer=$this->posxentrepot_a_reappro+35;
+		$this->posxpicture=$this->posxentrepot_source - (empty($conf->global->MAIN_DOCUMENTS_WITH_PICTURE_WIDTH)?20:$conf->global->MAIN_DOCUMENTS_WITH_PICTURE_WIDTH);	// width of images
 		
 		if ($this->page_largeur < 210) // To work with US executive format
 		{
 		    $this->posxpicture-=20;
-		    $this->posxqtyordered-=20;
-		    $this->posxqtytoship-=20;
+		    $this->posxentrepot_source-=20;
+		    $this->posxentrepot_a_reappro-=20;
 		}
 	}
 
@@ -100,7 +100,7 @@ class pdf_fiche_reappro extends ModelePdfExpedition
 		global $db, $user,$conf,$langs,$hookmanager;
 
 		//$object->fetch_thirdparty();
-
+		
 		if (! is_object($outputlangs)) $outputlangs=$langs;
 		// For backward compatibility with FPDF, force output charset to ISO, because FPDF expect text to be encoded in ISO
 		if (! empty($conf->global->MAIN_USE_FPDF)) $outputlangs->charset_output='ISO-8859-1';
@@ -117,9 +117,11 @@ class pdf_fiche_reappro extends ModelePdfExpedition
         
 		$nblignes = count($object->lines);
 
+		$TForm = unserialize($object->TFormulaire);
+//var_dump($TForm);
         // Loop on each lines to detect if there is at least one image to show
         $realpatharray=array();
-        if (! empty($conf->global->MAIN_GENERATE_SHIPMENT_WITH_PICTURE))
+       /* if (! empty($conf->global->MAIN_GENERATE_SHIPMENT_WITH_PICTURE))
         {
             $objphoto = new Product($this->db);
         
@@ -173,9 +175,9 @@ class pdf_fiche_reappro extends ModelePdfExpedition
         
                 if ($realpath && $arephoto) $realpatharray[$i]=$realpath;
             }
-        }
+        }*/
         
-        if (count($realpatharray) == 0) $this->posxpicture=$this->posxqtyordered;        
+        if (count($realpatharray) == 0) $this->posxpicture=$this->posxentrepot_source;        
         
 		if ($conf->reappromultientrepot->dir_output)
 		{
@@ -345,175 +347,182 @@ class pdf_fiche_reappro extends ModelePdfExpedition
 				{
 					$height_note=0;
 				}
-
+				
+				$tab_top -= 50;
+				
 				$iniY = $tab_top + 7;
 				$curY = $tab_top + 7;
 				$nexY = $tab_top + 7;
 
 				// Loop on each lines
-				for ($i = 0; $i < $nblignes; $i++)
-				{
-					$curY = $nexY;
-					$pdf->SetFont('','', $default_font_size - 1);   // Into loop to work with multipage
-					$pdf->SetTextColor(0,0,0);
-
-					// Define size of image if we need it
-					$imglinesize=array();
-					if (! empty($realpatharray[$i])) $imglinesize=pdf_getSizeForImage($realpatharray[$i]);
-
-					$pdf->setTopMargin($tab_top_newpage);
-					$pdf->setPageOrientation('', 1, $heightforfooter+$heightforfreetext+$heightforinfotot);	// The only function to edit the bottom margin of current page to set it.
-					$pageposbefore=$pdf->getPage();
-
-					$showpricebeforepagebreak=1;
-					$posYAfterImage=0;
-					$posYAfterDescription=0;
-
-					// We start with Photo of product line
-					if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imglinesize['height']) > ($this->page_hauteur-($heightforfooter+$heightforfreetext+$heightforinfotot)))	// If photo too high, we moved completely on new page
-					{
-						$pdf->AddPage('','',true);
-						if (! empty($tplidx)) $pdf->useTemplate($tplidx);
-						if (empty($conf->global->MAIN_PDF_DONOTREPEAT_HEAD)) $this->_pagehead($pdf, $object, 0, $outputlangs);
-						$pdf->setPage($pageposbefore+1);
-
-						$curY = $tab_top_newpage;
-						$showpricebeforepagebreak=0;
-					}
-
-					if (isset($imglinesize['width']) && isset($imglinesize['height']))
-					{
-						$curX = $this->posxpicture-1;
-						$pdf->Image($realpatharray[$i], $curX + (($this->posxqtyordered-$this->posxpicture-$imglinesize['width'])/2), $curY, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300);	// Use 300 dpi
-						// $pdf->Image does not increase value return by getY, so we save it manually
-						$posYAfterImage=$curY+$imglinesize['height'];
-					}
-
-					// Description of product line
-					$curX = $this->posxdesc-1;
-
-					$pdf->startTransaction();
-					// Description de la ligne produit
-					pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxpicture-$curX,3,$curX,$curY,$hideref,$hidedesc);
-						
-					$pageposafter=$pdf->getPage();
-					if ($pageposafter > $pageposbefore)	// There is a pagebreak
-					{
-						$pdf->rollbackTransaction(true);
-						$pageposafter=$pageposbefore;
-						//print $pageposafter.'-'.$pageposbefore;exit;
-						$pdf->setPageOrientation('', 1, $heightforfooter);	// The only function to edit the bottom margin of current page to set it.
-						pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxpicture-$curX,3,$curX,$curY,$hideref,$hidedesc);
-
-						$pageposafter=$pdf->getPage();
-						$posyafter=$pdf->GetY();
-						//var_dump($posyafter); var_dump(($this->page_hauteur - ($heightforfooter+$heightforfreetext+$heightforinfotot))); exit;
-						if ($posyafter > ($this->page_hauteur - ($heightforfooter+$heightforfreetext+$heightforinfotot)))	// There is no space left for total+free text
+				foreach($TForm as $fk_product=>$TData) {
+					
+					$first = true;
+					
+					foreach($TData as $TInfosReappro) {
+					
+						$curY = $nexY;
+						$pdf->SetFont('','', $default_font_size - 1);   // Into loop to work with multipage
+						$pdf->SetTextColor(0,0,0);
+	
+						// Define size of image if we need it
+						$imglinesize=array();
+						if (! empty($realpatharray[$i])) $imglinesize=pdf_getSizeForImage($realpatharray[$i]);
+	
+						$pdf->setTopMargin($tab_top_newpage);
+						$pdf->setPageOrientation('', 1, $heightforfooter+$heightforfreetext+$heightforinfotot);	// The only function to edit the bottom margin of current page to set it.
+						$pageposbefore=$pdf->getPage();
+	
+						$showpricebeforepagebreak=1;
+						$posYAfterImage=0;
+						$posYAfterDescription=0;
+	
+						// We start with Photo of product line
+						if (isset($imglinesize['width']) && isset($imglinesize['height']) && ($curY + $imglinesize['height']) > ($this->page_hauteur-($heightforfooter+$heightforfreetext+$heightforinfotot)))	// If photo too high, we moved completely on new page
 						{
-							if ($i == ($nblignes-1))	// No more lines, and no space left to show total, so we create a new page
-							{
-								$pdf->AddPage('','',true);
-								if (! empty($tplidx)) $pdf->useTemplate($tplidx);
-								if (empty($conf->global->MAIN_PDF_DONOTREPEAT_HEAD)) $this->_pagehead($pdf, $object, 0, $outputlangs);
-								$pdf->setPage($pageposafter+1);
-							}
-						}
-						else
-						{
-							// We found a page break
+							$pdf->AddPage('','',true);
+							if (! empty($tplidx)) $pdf->useTemplate($tplidx);
+							if (empty($conf->global->MAIN_PDF_DONOTREPEAT_HEAD)) $this->_pagehead($pdf, $object, 0, $outputlangs);
+							$pdf->setPage($pageposbefore+1);
+	
+							$curY = $tab_top_newpage;
 							$showpricebeforepagebreak=0;
 						}
-					}
-					else	// No pagebreak
-					{
-						$pdf->commitTransaction();
-					}
-					$posYAfterDescription=$pdf->GetY();
-					
-					$nexY = $pdf->GetY();
-					$pageposafter=$pdf->getPage();
-					
-					$pdf->setPage($pageposbefore);
-					$pdf->setTopMargin($this->marge_haute);
-					$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
-
-					// We suppose that a too long description or photo were moved completely on next page
-					if ($pageposafter > $pageposbefore && empty($showpricebeforepagebreak)) {
-						$pdf->setPage($pageposafter); $curY = $tab_top_newpage;
-					}
-
-					// We suppose that a too long description is moved completely on next page
-					if ($pageposafter > $pageposbefore) {
-						$pdf->setPage($pageposafter); $curY = $tab_top_newpage;
-					}
-
-					$pdf->SetFont('','', $default_font_size - 1);   // On repositionne la police par defaut
-
-					$pdf->SetXY($this->posxqtyordered, $curY);
-					$pdf->MultiCell(($this->posxqtytoship - $this->posxqtyordered), 3, $object->lines[$i]->qty_asked,'','C');
-
-					$pdf->SetXY($this->posxqtytoship, $curY);
-					$pdf->MultiCell(($this->posxdifference_ordered_shipped - $this->posxqtytoship), 3, $object->lines[$i]->qty_shipped,'','C');
-					
-					dol_include_once('/hevea/class/hevea_tools.class.php');
-					$hevea_tools = new HeveaTools($db);
-					$TInfosStock = $hevea_tools->getInfosStockProduct($user, $object->lines[$i]->fk_product);
-					
-					$diff = $object->lines[$i]->qty_asked - $object->lines[$i]->qty_shipped;
-					$date_livraison = '';
-					
-					if(!empty($TInfosStock['dt_receive'])
-					   && $diff > 0
-					   && strtotime($TInfosStock['dt_receive_us']) > strtotime(date('Y-m-d'))) $date_livraison = ' (le '.$TInfosStock['dt_receive'].')';
-					
-					$pdf->SetXY($this->posxdifference_ordered_shipped, $curY);
-					$pdf->MultiCell(($this->page_largeur - $this->marge_droite - $this->posxdifference_ordered_shipped), 3, $todo/*TODO*/,'','C');
-
-					// Add line
-					if ($conf->global->MAIN_PDF_DASH_BETWEEN_LINES && $i < ($nblignes - 1))
-					{
-						$pdf->setPage($pageposafter);
-						$pdf->SetLineStyle(array('dash'=>'1,1','color'=>array(80,80,80)));
-						//$pdf->SetDrawColor(190,190,200);
-						$pdf->line($this->marge_gauche, $nexY+1, $this->page_largeur - $this->marge_droite, $nexY+1);
-						$pdf->SetLineStyle(array('dash'=>0));
-					}
-
-					$nexY+=2;    // Passe espace entre les lignes
-
-					// Detect if some page were added automatically and output _tableau for past pages
-					while ($pagenb < $pageposafter)
-					{
-						$pdf->setPage($pagenb);
-						if ($pagenb == 1)
+	
+						if (isset($imglinesize['width']) && isset($imglinesize['height']))
 						{
-							$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1);
+							$curX = $this->posxpicture-1;
+							$pdf->Image($realpatharray[$i], $curX + (($this->posxentrepot_source-$this->posxpicture-$imglinesize['width'])/2), $curY, $imglinesize['width'], $imglinesize['height'], '', '', '', 2, 300);	// Use 300 dpi
+							// $pdf->Image does not increase value return by getY, so we save it manually
+							$posYAfterImage=$curY+$imglinesize['height'];
 						}
-						else
+	
+						// Description of product line
+						$curX = $this->posxdesc-1;
+	
+						$pdf->startTransaction();
+						
+						// Description de la ligne produit
+						if($first) $object->lines[$i]->fk_product = $TInfosReappro['fk_product'];
+						else $object->lines[$i]->fk_product = '';
+						pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxpicture-$curX,3,$curX,$curY,$hideref,$hidedesc);
+						
+						$first=false;
+							
+						$pageposafter=$pdf->getPage();
+						if ($pageposafter > $pageposbefore)	// There is a pagebreak
 						{
-							$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1);
+							$pdf->rollbackTransaction(true);
+							$pageposafter=$pageposbefore;
+							//print $pageposafter.'-'.$pageposbefore;exit;
+							$pdf->setPageOrientation('', 1, $heightforfooter);	// The only function to edit the bottom margin of current page to set it.
+							pdf_writelinedesc($pdf,$object,$i,$outputlangs,$this->posxpicture-$curX,3,$curX,$curY,$hideref,$hidedesc);
+	
+							$pageposafter=$pdf->getPage();
+							$posyafter=$pdf->GetY();
+							//var_dump($posyafter); var_dump(($this->page_hauteur - ($heightforfooter+$heightforfreetext+$heightforinfotot))); exit;
+							if ($posyafter > ($this->page_hauteur - ($heightforfooter+$heightforfreetext+$heightforinfotot)))	// There is no space left for total+free text
+							{
+								if ($i == ($nblignes-1))	// No more lines, and no space left to show total, so we create a new page
+								{
+									$pdf->AddPage('','',true);
+									if (! empty($tplidx)) $pdf->useTemplate($tplidx);
+									if (empty($conf->global->MAIN_PDF_DONOTREPEAT_HEAD)) $this->_pagehead($pdf, $object, 0, $outputlangs);
+									$pdf->setPage($pageposafter+1);
+								}
+							}
+							else
+							{
+								// We found a page break
+								$showpricebeforepagebreak=0;
+							}
 						}
-						$this->_pagefoot($pdf,$object,$outputlangs,1);
-						$pagenb++;
-						$pdf->setPage($pagenb);
+						else	// No pagebreak
+						{
+							$pdf->commitTransaction();
+						}
+						$posYAfterDescription=$pdf->GetY();
+						
+						$nexY = $pdf->GetY();
+						$pageposafter=$pdf->getPage();
+						
+						$pdf->setPage($pageposbefore);
+						$pdf->setTopMargin($this->marge_haute);
 						$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
-					}
-					if (isset($object->lines[$i+1]->pagebreak) && $object->lines[$i+1]->pagebreak)
-					{
-						if ($pagenb == 1)
-						{
-							$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1);
+	
+						// We suppose that a too long description or photo were moved completely on next page
+						if ($pageposafter > $pageposbefore && empty($showpricebeforepagebreak)) {
+							$pdf->setPage($pageposafter); $curY = $tab_top_newpage;
 						}
-						else
-						{
-							$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1);
+	
+						// We suppose that a too long description is moved completely on next page
+						if ($pageposafter > $pageposbefore) {
+							$pdf->setPage($pageposafter); $curY = $tab_top_newpage;
 						}
-						$this->_pagefoot($pdf,$object,$outputlangs,1);
-						// New page
-						$pdf->AddPage();
-						if (! empty($tplidx)) $pdf->useTemplate($tplidx);
-						$pagenb++;
+	
+						$pdf->SetFont('','', $default_font_size - 1);   // On repositionne la police par defaut
+						
+						$entrepot = new Entrepot($db);
+						$entrepot->fetch($TInfosReappro['fk_entrepot']);
+						$pdf->SetXY($this->posxentrepot_source, $curY);
+						$pdf->MultiCell(($this->posxentrepot_a_reappro - $this->posxentrepot_source), 3, $entrepot->libelle,'','C');
+	
+						$entrepot = new Entrepot($db);
+						$entrepot->fetch($TInfosReappro['fk_entrepot_to_reappro']);
+						$pdf->SetXY($this->posxentrepot_a_reappro, $curY);
+						$pdf->MultiCell(($this->posxqty_a_transferer - $this->posxentrepot_a_reappro), 3, $entrepot->libelle,'','C');
+						
+						$pdf->SetXY($this->posxqty_a_transferer, $curY);
+						$pdf->MultiCell(($this->page_largeur - $this->marge_droite - $this->posxqty_a_transferer), 3,$TInfosReappro['qty_to_reappro'],'','C');
+	
+						// Add line
+						if ($conf->global->MAIN_PDF_DASH_BETWEEN_LINES && $i < ($nblignes - 1))
+						{
+							$pdf->setPage($pageposafter);
+							$pdf->SetLineStyle(array('dash'=>'1,1','color'=>array(80,80,80)));
+							//$pdf->SetDrawColor(190,190,200);
+							$pdf->line($this->marge_gauche, $nexY+1, $this->page_largeur - $this->marge_droite, $nexY+1);
+							$pdf->SetLineStyle(array('dash'=>0));
+						}
+	
+						$nexY+=2;    // Passe espace entre les lignes
+	
+						// Detect if some page were added automatically and output _tableau for past pages
+						while ($pagenb < $pageposafter)
+						{
+							$pdf->setPage($pagenb);
+							if ($pagenb == 1)
+							{
+								$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1);
+							}
+							else
+							{
+								$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1);
+							}
+							$this->_pagefoot($pdf,$object,$outputlangs,1);
+							$pagenb++;
+							$pdf->setPage($pagenb);
+							$pdf->setPageOrientation('', 1, 0);	// The only function to edit the bottom margin of current page to set it.
+						}
+						if (isset($object->lines[$i+1]->pagebreak) && $object->lines[$i+1]->pagebreak)
+						{
+							if ($pagenb == 1)
+							{
+								$this->_tableau($pdf, $tab_top, $this->page_hauteur - $tab_top - $heightforfooter, 0, $outputlangs, 0, 1);
+							}
+							else
+							{
+								$this->_tableau($pdf, $tab_top_newpage, $this->page_hauteur - $tab_top_newpage - $heightforfooter, 0, $outputlangs, 1, 1);
+							}
+							$this->_pagefoot($pdf,$object,$outputlangs,1);
+							// New page
+							$pdf->AddPage();
+							if (! empty($tplidx)) $pdf->useTemplate($tplidx);
+							$pagenb++;
+						}
+					
 					}
+
 				}
 
 				// Show square
@@ -604,28 +613,28 @@ class pdf_fiche_reappro extends ModelePdfExpedition
 			$pdf->line($this->marge_gauche, $tab_top+5, $this->page_largeur-$this->marge_droite, $tab_top+5);
 
 			$pdf->SetXY($this->posxdesc-1, $tab_top+1);
-			$pdf->MultiCell($this->posxqtyordered - $this->posxdesc, 2, $outputlangs->transnoentities("Description"), '', 'L');
+			$pdf->MultiCell($this->posxentrepot_source - $this->posxdesc, 2, $outputlangs->transnoentities("Produit"), '', 'L');
 		}
 
-		$pdf->line($this->posxqtyordered-1, $tab_top, $this->posxqtyordered-1, $tab_top + $tab_height);
+		$pdf->line($this->posxentrepot_source-1, $tab_top, $this->posxentrepot_source-1, $tab_top + $tab_height);
 		if (empty($hidetop))
 		{
-			$pdf->SetXY($this->posxqtyordered, $tab_top+1);
-			$pdf->MultiCell(($this->posxqtytoship - $this->posxqtyordered), 2, $outputlangs->transnoentities("QtyOrdered"),'','C');
+			$pdf->SetXY($this->posxentrepot_source, $tab_top+1);
+			$pdf->MultiCell(($this->posxentrepot_a_reappro - $this->posxentrepot_source), 2, $outputlangs->transnoentities("Entrepôt source"),'','C');
 		}
 
-		$pdf->line($this->posxqtytoship-1, $tab_top, $this->posxqtytoship-1, $tab_top + $tab_height);
+		$pdf->line($this->posxentrepot_a_reappro-1, $tab_top, $this->posxentrepot_a_reappro-1, $tab_top + $tab_height);
 		if (empty($hidetop))
 		{
-			$pdf->SetXY($this->posxqtytoship, $tab_top+1);
-			$pdf->MultiCell(($this->posxdifference_ordered_shipped-$this->posxqtytoship), 2, $outputlangs->transnoentities("QtyToShip"),'','C');
+			$pdf->SetXY($this->posxentrepot_a_reappro, $tab_top+1);
+			$pdf->MultiCell(($this->posxqty_a_transferer-$this->posxentrepot_a_reappro), 2, $outputlangs->transnoentities("Entrepôt à réappro."),'','C');
 		}
 
-		$pdf->line($this->posxdifference_ordered_shipped-1, $tab_top, $this->posxdifference_ordered_shipped-1, $tab_top + $tab_height);
+		$pdf->line($this->posxqty_a_transferer-1, $tab_top, $this->posxqty_a_transferer-1, $tab_top + $tab_height);
 		if (empty($hidetop))
 		{
-			$pdf->SetXY($this->posxdifference_ordered_shipped, $tab_top+1);
-			$pdf->MultiCell(($this->page_largeur - $this->marge_droite - $this->posxdifference_ordered_shipped), 2, $outputlangs->transnoentities("Reste à livrer"),'','C');
+			$pdf->SetXY($this->posxqty_a_transferer, $tab_top+1);
+			$pdf->MultiCell(($this->page_largeur - $this->marge_droite - $this->posxqty_a_transferer), 2, $outputlangs->transnoentities("Quantité à transférer"),'','C');
 		}
 		
 	}
@@ -717,24 +726,24 @@ class pdf_fiche_reappro extends ModelePdfExpedition
 		$pdf->SetFont('','B', $default_font_size + 2);
 		$pdf->SetXY($posx,$posy);
 		$pdf->SetTextColor(0,0,60);
-		$title=$outputlangs->transnoentities("SendingSheet");
+		$title=$outputlangs->transnoentities("REAPPROVISIONNEMENT NUMERO ".$object->rowid);
 		$pdf->MultiCell(100, 4, $title, '', 'R');
         $posy+=1;
 
 		$pdf->SetFont('','', $default_font_size + 1);
 
-		$posy+=4;
+		/*$posy+=4;
 		$pdf->SetXY($posx,$posy);
 		$pdf->SetTextColor(0,0,60);
-		$pdf->MultiCell(100, 4, $outputlangs->transnoentities("RefSending") ." : ".$object->ref, '', 'R');
+		$pdf->MultiCell(100, 4, $outputlangs->transnoentities("Numéro réappro.") ." : ".$object->rowid, '', 'R');*/
 
 		// Date planned delivery
-		if (! empty($object->date_delivery))
+		if (! empty($object->date_maj))
 		{
     		$posy+=4;
     		$pdf->SetXY($posx,$posy);
     		$pdf->SetTextColor(0,0,60);
-    		$pdf->MultiCell(100, 4, $outputlangs->transnoentities("DateDeliveryPlanned")." : ".dol_print_date($object->date_delivery,"day",false,$outputlangs,true), '', 'R');
+    		$pdf->MultiCell(100, 4, $outputlangs->transnoentities("Date")." : ".dol_print_date($object->date_maj,"day",false,$outputlangs,true), '', 'R');
 		}
 		
 		if (! empty($object->client->code_client))
@@ -777,7 +786,9 @@ class pdf_fiche_reappro extends ModelePdfExpedition
 				$pdf->MultiCell(60, 2, $outputlangs->transnoentities("OrderDate")." : ".dol_print_date($linkedobject->date,"day",false,$outputlangs,true), 0, 'R');
 			}
 		}
-
+		
+		$showaddress=0;
+		
 		if ($showaddress)
 		{
 			// Sender properties
