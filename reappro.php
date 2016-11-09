@@ -268,7 +268,7 @@ function _get_products_to_reappro($id_entrepot_to_reappro, $TEntrepotSource) {
 	$sql = 'SELECT pse.fk_product, pse.fk_entrepot, ps.reel
 				   , pse.seuil_stock_alerte, pse.desiredstock
 				   , ABS(IFNULL(ps.reel, 0) - pse.seuil_stock_alerte) as qty_to_reappro
-			FROM '.MAIN_DB_PREFIX.'product_stock_entrepot pse
+			FROM '.MAIN_DB_PREFIX.'product_warehouse_properties pse
 			LEFT JOIN '.MAIN_DB_PREFIX.'product_stock ps ON (pse.fk_entrepot = ps.fk_entrepot AND pse.fk_product = ps.fk_product)
 			WHERE pse.fk_entrepot IN('.implode(', ', $TChildWarehouses).')
 			AND (ps.reel IS NULL OR ps.reel < pse.seuil_stock_alerte)';
