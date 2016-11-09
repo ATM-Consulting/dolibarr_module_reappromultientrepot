@@ -4,6 +4,7 @@ require './config.php';
 require_once DOL_DOCUMENT_ROOT . '/product/stock/class/entrepot.class.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
+require_once DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/html.formproduct.class.php';
 dol_include_once('/reappromultientrepot/lib/reappromultientrepot.lib.php');
 dol_include_once('/reappromultientrepot/class/reappro_multi_entrepot.class.php');
@@ -71,9 +72,12 @@ switch($action) {
 		_fiche_calcul($reappro, unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource), 'view');
 		break;
 		
+	case 'builddoc':
+		_builddoc($reappro);
 	
 	default :
 		_fiche($reappro, 'view');
+		_fiche_calcul($reappro, unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource), 'view');
 		break;
 	
 }
@@ -393,5 +397,12 @@ function _ventilation(&$reappro, $TFormulaire) {
 		}
 		
 	}
+	
+}
+
+function _builddoc(&$reappro) {
+	global $db, $langs;
+	
+	$reappro->generateDocument();
 	
 }
