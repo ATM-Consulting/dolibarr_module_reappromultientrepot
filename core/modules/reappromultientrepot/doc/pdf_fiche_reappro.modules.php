@@ -182,13 +182,13 @@ class pdf_fiche_reappro extends ModelePdfExpedition
 			// Definition de $dir et $file
 			if ($object->specimen)
 			{
-				$dir = $conf->reappromultientrepot->dir_output."/reappro";
+				$dir = $conf->reappromultientrepot->dir_output;
 				$file = $dir . "/SPECIMEN.pdf";
 			}
 			else
 			{
 				$expref = dol_sanitizeFileName($object->rowid);
-				$dir = $conf->reappromultientrepot->dir_output."/reappro/" . $expref;
+				$dir = $conf->reappromultientrepot->dir_output."/" . $expref;
 				$file = $dir . "/reappro_" . $expref . ".pdf";
 			}
 //var_dump($file);exit;

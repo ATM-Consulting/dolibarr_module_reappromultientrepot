@@ -2,7 +2,9 @@
 
 require './config.php';
 require_once DOL_DOCUMENT_ROOT . '/product/stock/class/entrepot.class.php';
+require_once DOL_DOCUMENT_ROOT.'/core/lib/files.lib.php';
 require_once DOL_DOCUMENT_ROOT . '/core/class/html.form.class.php';
+require_once DOL_DOCUMENT_ROOT . '/core/class/html.formfile.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/product.class.php';
 require_once DOL_DOCUMENT_ROOT . '/expedition/class/expedition.class.php';
 require_once DOL_DOCUMENT_ROOT . '/product/class/html.formproduct.class.php';
@@ -70,14 +72,25 @@ switch($action) {
 	case 'view':
 		_fiche($reappro, 'view');
 		_fiche_calcul($reappro, unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource), 'view');
+		_print_document_list($reappro);
 		break;
-		
+	
+	case 'remove_file':
+		$upload_dir =	$conf->reappromultientrepot->dir_output;
+		$file =	$upload_dir	. '/' .	GETPOST('file');
+		$ret=dol_delete_file($file,0,0,0,$object);
+		_fiche($reappro, 'view');
+		_fiche_calcul($reappro, unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource), 'view');
+		_print_document_list($reappro);
+		break;
+	
 	case 'builddoc':
 		_builddoc($reappro);
 	
 	default :
 		_fiche($reappro, 'view');
 		_fiche_calcul($reappro, unserialize($reappro->TFormulaire), unserialize($reappro->TEntrepotSource), 'view');
+		_print_document_list($reappro);
 		break;
 	
 }
@@ -401,8 +414,26 @@ function _ventilation(&$reappro, $TFormulaire) {
 }
 
 function _builddoc(&$reappro) {
+	
 	global $db, $langs;
 	
 	$reappro->generateDocument();
+
+}
+
+function _print_document_list(&$reappro) {
+	
+	global $db,$conf,$user; 
+	
+	$formfile = new FormFile($db);
+	
+	$filedir = $conf->reappromultientrepot->dir_output . "/" .$reappro->rowid;
+
+	$urlsource = $_SERVER["PHP_SELF"]."?id=".$reappro->rowid;
+
+	$genallowed=$user->rights->reappromultientrepot->lire;
+	$delallowed=$user->rights->reappromultientrepot->supprimer;
+	$genallowed=$delallowed=1; // TODO créer droit
+	$somethingshown=$formfile->show_documents('reappromultientrepot',$reappro->rowid,$filedir,$urlsource,$genallowed,$delallowed,'',1,0,0,28,0,'','','',$soc->default_lang);
 	
 }
