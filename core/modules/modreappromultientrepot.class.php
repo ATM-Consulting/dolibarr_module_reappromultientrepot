@@ -89,11 +89,11 @@ class modreappromultientrepot extends DolibarrModules
 		//							'dir' => array('output' => 'othermodulename'),      // To force the default directories names
 		//							'workflow' => array('WORKFLOW_MODULE1_YOURACTIONTYPE_MODULE2'=>array('enabled'=>'! empty($conf->module1->enabled) && ! empty($conf->module2->enabled)', 'picto'=>'yourpicto@reappromultientrepot')) // Set here all workflow context managed by module
 		//                        );
-		$this->module_parts = array();
+		$this->module_parts = array('models' => 1);
 
 		// Data directories to create when module is enabled.
 		// Example: this->dirs = array("/reappromultientrepot/temp");
-		$this->dirs = array();
+		$this->dirs = array("/reappromultientrepot/reappro/");
 
 		// Config pages. Put here list of php page, stored into reappromultientrepot/admin directory, to use to setup module.
 		$this->config_page_url = array("reappromultientrepot_setup.php@reappromultientrepot");
