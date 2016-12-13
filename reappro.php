@@ -106,7 +106,7 @@ function _fiche(&$reappro, $mode='view') {
 	global $db, $langs, $form, $formProduct;
 	
 	$head = reappromultientrepotPrepareHead($reappro->rowid);
-	dol_fiche_head($head, 'Module104993Name', $langs->trans("Module104993Name"), 0, 'Module104993Name');
+	dol_fiche_head($head, 'Module104993Name', $langs->trans("Module104993Name"), 0, 'stock');
 	
 	$e = new Entrepot($db);
 	
@@ -424,6 +424,8 @@ function _builddoc(&$reappro) {
 function _print_document_list(&$reappro) {
 	
 	global $db,$conf,$user; 
+	
+	if(empty($reappro->rowid)) return 0;
 	
 	$formfile = new FormFile($db);
 	
